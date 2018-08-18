@@ -22,10 +22,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.apache.felix.metatype.AD;
 import org.apache.felix.metatype.MetaData;
@@ -42,7 +40,7 @@ import org.codehaus.plexus.util.IOUtil;
 @Mojo(
     name = "generate-metatype-doc",
     defaultPhase = LifecyclePhase.PACKAGE,
-    threadSafe = true
+    threadSafe = false
 )
 public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
 
@@ -77,10 +75,15 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
     @Parameter(defaultValue="${project.build.directory}/mddoc/metatype/${project.artifactId}/${project.version}")
     private File metatypeMarkdownDirectory;
 
-    @Parameter(defaultValue="# ${project.name} ${project.version} Metatypes", readonly = true)
-    private String overviewTitle;
+    @Parameter(defaultValue="${project.name} ${project.version} Metatypes", readonly = true)
+    private String readmeTitle;
 
     // methods
+
+    @Override
+    protected String getReadmeTitle() {
+        return readmeTitle;
+    }
 
     @Override
     protected File getSourceDir() {
@@ -99,8 +102,6 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
 
     @Override
     protected void handle(Collection<File> metatypes) throws MojoExecutionException, MojoFailureException {
-        Set<String> indexedPackages = new HashSet<>();
-
         for (File metatypeFile : metatypes) {
             MetaData metaData = readMetaData(metatypeFile);
             Properties localizationProperties = readLocalizationProperties(metatypeFile, metaData);
@@ -114,20 +115,9 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
 
                 ClassName className = ClassName.get(id);
 
-                // write in the overview
+                // write in the index
 
-                if (indexedPackages.add(className.getPackageName())) {
-                    File indexPackagesFile = new File(metatypeMarkdownDirectory, "README.md");
-                    append(overviewTitle, indexPackagesFile, " * [%s](./%s.md)%n", className.getPackageName(), className.getPackageName());
-                }
-
-                // write in the related package file
-
-                File packageFile = new File(metatypeMarkdownDirectory, className.getPackageName() + ".md");
-                append("# " + className.getPackageName(), packageFile, " * [%s](./%s/%s.md)%n",
-                       className.getSimpleName(),
-                       className.getPackagePath(),
-                       className.getSimpleName());
+                doIndex(className.getPackageName(), className);
 
                 // write in the related metatype file
 

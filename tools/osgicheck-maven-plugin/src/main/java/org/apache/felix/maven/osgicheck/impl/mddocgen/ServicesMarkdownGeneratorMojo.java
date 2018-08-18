@@ -42,7 +42,7 @@ import org.osgi.service.log.LogService;
 @Mojo(
     name = "generate-services-doc",
     defaultPhase = LifecyclePhase.PACKAGE,
-    threadSafe = true
+    threadSafe = false
 )
 public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo implements Logger {
 
@@ -54,8 +54,13 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
     @Parameter(defaultValue="${project.build.directory}/mddoc/services/${project.artifactId}/${project.version}")
     private File servicesMarkdownDirectory;
 
-    @Parameter(defaultValue="# ${project.name} ${project.version} Services", readonly = true)
-    private String overviewTitle;
+    @Parameter(defaultValue="${project.name} ${project.version} Services", readonly = true)
+    private String readmeTitle;
+
+    @Override
+    protected String getReadmeTitle() {
+        return readmeTitle;
+    }
 
     @Override
     protected File getSourceDir() {
@@ -88,12 +93,8 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
 
                         for (String providedService : providedServices) {
                             // index each service impl to the related provided
-                            append("# " + providedService,
-                                   new File(servicesMarkdownDirectory, providedService + ".md"),
-                                   " * [%s](./%s/%s.md)%n",
-                                   component.getImplementationClassName(),
-                                   className.getPackagePath(),
-                                   className.getSimpleName());
+
+                            doIndex(providedService, className);
                         }
 
                         // write related impl metadata

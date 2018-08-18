@@ -21,7 +21,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -36,8 +42,18 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
     @Parameter(defaultValue = "${user.name}", required = true, readonly = true)
     private String currentUser;
 
+    @Parameter(defaultValue = "${project.description}", required = true, readonly = true)
+    private String projectDescription;
+
+    @Parameter(defaultValue = "Copyright &copy; ${project.inceptionYear} - %tY [${project.organization.name}](${project.organization.url}). All Rights Reserved.%n", required = true, readonly = true)
+    private String projectCopyrights;
+
     @Parameter
     private String[] exclude;
+
+    private Map<String, List<ClassName>> index;
+
+    protected abstract String getReadmeTitle();
 
     protected abstract String getIncludes();
 
@@ -80,26 +96,64 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
             return;
         }
 
+        index = new TreeMap<>();
+
         handle(found);
+
+        writeIndex();
     }
 
-    protected static void append(String title, File target, String format, Object...args) throws MojoExecutionException {
-        boolean writeTitle = !target.exists();
+    protected final void doIndex(String key, ClassName value) {
+        // TODO replace with Map#computeIfAbsent once switched to java 8
+        List<ClassName> values = index.get(key);
+        if (values == null) {
+            values = new ArrayList<>();
+            index.put(key, values);
+        }
+        values.add(value);
+    }
 
-        PrintWriter out = null;
+    private void writeIndex() throws MojoExecutionException {
+        PrintWriter writer = null;
         try {
-            out = newPrintWriter(target);
+            writer = newPrintWriter(new File(getTargetDir(), "README.md"));
 
-            if (writeTitle) {
-                out.println(title);
-                out.println();
+            writer.println(getReadmeTitle());
+            writer.println("=======================");
+            writer.println();
+            writer.println(projectDescription);
+            writer.println();
+            writer.printf(projectCopyrights, new Date());
+            writer.println();
+
+            // write the ToC first
+
+            writer.println("# Table of contents");
+            writer.println();
+
+            for (String key : index.keySet()) {
+                writer.printf(" * [%1$2s](#%1$2s)%n", key);
             }
+            writer.println();
 
-            out.printf(format, args);
+            // write sections
+
+            for (Entry<String, List<ClassName>> entry : index.entrySet()) {
+                writer.printf("# %1$2s <a id=\"%1$2s\"></a>%n", entry.getKey());
+                writer.println();
+
+                for (ClassName className : entry.getValue()) {
+                    writer.printf(" * [%s](./%s/%s.md)%n",
+                                  className.getQualifiedName(),
+                                  className.getPackagePath(),
+                                  className.getSimpleName());
+                }
+                writer.println();
+            }
         } catch (IOException e) {
-            throw new MojoExecutionException("An error occurred while appending data to file: " + target, e);
+            throw new MojoExecutionException("An error occurred while rendering index in README.md", e);
         } finally {
-            IOUtil.close(out);
+            IOUtil.close(writer);
         }
     }
 
@@ -108,6 +162,8 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
     }
 
     protected static final class ClassName {
+
+        private final String qualifiedName;
 
         private final String packageName;
 
@@ -120,15 +176,21 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
             String packageName = qualifiedName.substring(0, sep);
             String packagePath = packageName.replace('.', '/');
             String simpleName = qualifiedName.substring(sep + 1);
-            return new ClassName(packageName, packagePath, simpleName);
+            return new ClassName(qualifiedName, packageName, packagePath, simpleName);
         }
 
-        ClassName(String packageName,
+        ClassName(String qualifiedName,
+                  String packageName,
                   String packagePath,
                   String simpleName) {
+            this.qualifiedName = qualifiedName;
             this.packageName = packageName;
             this.packagePath = packagePath;
             this.simpleName = simpleName;
+        }
+
+        public String getQualifiedName() {
+            return qualifiedName;
         }
 
         public String getPackageName() {
