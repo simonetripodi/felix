@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.felix.scr.impl.helper.Logger;
@@ -31,8 +32,6 @@ import org.apache.felix.scr.impl.metadata.PropertyMetadata;
 import org.apache.felix.scr.impl.metadata.ServiceMetadata;
 import org.apache.felix.scr.impl.parser.KXml2SAXParser;
 import org.apache.felix.scr.impl.xml.XmlHandler;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -78,7 +77,7 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
     }
 
     @Override
-    protected void handle(Collection<File> services) throws MojoExecutionException, MojoFailureException {
+    protected void handle(Collection<File> services) {
         for (File serviceFile : services) {
             List<ComponentMetadata> metadata = readComponentMetadata(serviceFile);
 
@@ -128,7 +127,7 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
                                 }
                             }
                         } catch (IOException e) {
-                            throw new MojoExecutionException("An error occurred while rendering documentation in " + targetFile, e);
+                            getLog().error("An error occurred while rendering documentation in " + targetFile, e);
                         } finally {
                             IOUtil.close(writer);
                         }
@@ -138,11 +137,13 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
         }
     }
 
-    private List<ComponentMetadata> readComponentMetadata(File serviceFile) throws MojoExecutionException {
+    private List<ComponentMetadata> readComponentMetadata(File serviceFile) {
         getLog().debug("Analyzing '" + serviceFile + "' SCR file...");
 
         // read the original XML file
         FileReader reader = null;
+        List<ComponentMetadata> metadata = null;
+
         try {
             reader = new FileReader(serviceFile);
 
@@ -152,14 +153,17 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
 
             getLog().debug("SCR file '" + serviceFile + "' successfully load");
 
-            return xmlHandler.getComponentMetadataList();
+            metadata = xmlHandler.getComponentMetadataList();
         } catch (Exception e) {
-            throw new MojoExecutionException("SCR file '"
-                                             + serviceFile
-                                             + "' could not be read", e);
+            getLog().error("SCR file '"
+                           + serviceFile
+                           + "' could not be read", e);
+            metadata = Collections.emptyList();
         } finally {
             IOUtil.close(reader);
         }
+
+        return metadata;
     }
 
     // logger methods

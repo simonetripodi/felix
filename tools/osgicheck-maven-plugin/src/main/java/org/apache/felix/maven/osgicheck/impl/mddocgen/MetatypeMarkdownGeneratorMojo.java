@@ -29,8 +29,6 @@ import org.apache.felix.metatype.AD;
 import org.apache.felix.metatype.MetaData;
 import org.apache.felix.metatype.MetaDataReader;
 import org.apache.felix.metatype.OCD;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -101,9 +99,14 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
     }
 
     @Override
-    protected void handle(Collection<File> metatypes) throws MojoExecutionException, MojoFailureException {
+    protected void handle(Collection<File> metatypes) {
         for (File metatypeFile : metatypes) {
             MetaData metaData = readMetaData(metatypeFile);
+
+            if (metaData == null) {
+                continue;
+            }
+
             Properties localizationProperties = readLocalizationProperties(metatypeFile, metaData);
 
             // produce the output(s)
@@ -152,7 +155,7 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
                     Map<String, AD> optionalAttributes = ocd.getOptionalAttributes();
                     printAttributes(optionalAttributes, localizationProperties, writer);
                 } catch (IOException e) {
-                    throw new MojoExecutionException("An error occurred while rendering documentation in " + targetFile, e);
+                    getLog().error("An error occurred while rendering documentation in " + targetFile, e);
                 } finally {
                     IOUtil.close(writer);
                 }
@@ -160,28 +163,29 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
         }
     }
 
-    private MetaData readMetaData(File metatypeFile) throws MojoExecutionException {
+    private MetaData readMetaData(File metatypeFile) {
         getLog().debug("Analyzing '" + metatypeFile + "' meta type file...");
 
         // read the original XML file
         FileInputStream inputStream = null;
+        MetaData metadata = null;
         try {
             inputStream = new FileInputStream(metatypeFile);
-            MetaData metadata = reader.parse(inputStream);
+            metadata = reader.parse(inputStream);
 
             getLog().debug("Metaype file '" + metatypeFile + "' successfully load");
-
-            return metadata;
         } catch (Exception e) {
-            throw new MojoExecutionException("Metatype file '"
-                                             + metatypeFile
-                                             + "' could not be read", e);
+            getLog().error("Metatype file '"
+                           + metatypeFile
+                           + "' could not be read", e);
         } finally {
             IOUtil.close(inputStream);
         }
+
+        return metadata;
     }
 
-    private Properties readLocalizationProperties(File metatypeFile, MetaData metaData) throws MojoExecutionException {
+    private Properties readLocalizationProperties(File metatypeFile, MetaData metaData) {
         StringBuilder propertiesFileName = new StringBuilder(metaData.getLocalePrefix());
         if (locale != null && !locale.isEmpty()) {
             propertiesFileName.append('_')
@@ -204,9 +208,9 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
 
                 getLog().debug("Properties file '" + propertiesFile + "' successfully load");
             } catch (IOException e) {
-                throw new MojoExecutionException("Properties file '"
-                                                 + metatypeFile
-                                                 + "' could not be read", e);
+                getLog().error("Properties file '"
+                               + metatypeFile
+                               + "' can not be read, labels could not be human-readable", e);
             } finally {
                 IOUtil.close(inputStream);
             }

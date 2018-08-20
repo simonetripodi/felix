@@ -61,7 +61,7 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
 
     protected abstract File getTargetDir();
 
-    protected abstract void handle(Collection<File> found) throws MojoExecutionException, MojoFailureException;
+    protected abstract void handle(Collection<File> found);
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
