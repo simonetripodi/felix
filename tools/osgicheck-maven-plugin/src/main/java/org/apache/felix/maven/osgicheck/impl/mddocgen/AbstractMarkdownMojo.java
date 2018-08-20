@@ -163,6 +163,8 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
 
     protected static final class ClassName {
 
+        private static final String DEFAULT_PACKAGE = "default";
+
         private final String qualifiedName;
 
         private final String packageName;
@@ -173,13 +175,19 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
 
         public static ClassName get(String qualifiedName) {
             int sep = qualifiedName.lastIndexOf('.');
+            String packageName;
+            String packagePath;
+            String simpleName;
             if (sep != -1) {
-                String packageName = qualifiedName.substring(0, sep);
-                String packagePath = packageName.replace('.', '/');
-                String simpleName = qualifiedName.substring(sep + 1);
-                return new ClassName(qualifiedName, packageName, packagePath, simpleName);
+                packageName = qualifiedName.substring(0, sep);
+                packagePath = packageName.replace('.', '/');
+                simpleName = qualifiedName.substring(sep + 1);
+            } else {
+                packageName = DEFAULT_PACKAGE;
+                packagePath = DEFAULT_PACKAGE;
+                simpleName = qualifiedName.replace(' ', '_');
             }
-            return new ClassName(qualifiedName, "", "", qualifiedName);
+            return new ClassName(qualifiedName, packageName, packagePath, simpleName);
         }
 
         ClassName(String qualifiedName,

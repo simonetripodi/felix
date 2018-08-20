@@ -134,7 +134,7 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
                         // generic properties
 
                         writer.format("# %s%n%n", getlocalizedLabel(ocd.getName(), localizationProperties));
-                        writer.format("## `%s`%n%n", ocd.getID());
+                        writer.format("## `%s`%n%n", id);
                         writer.println(getlocalizedLabel(ocd.getDescription(), localizationProperties));
                         writer.println();
                         writer.println("| ID  | Name | Required | Type | Default value | Description |");
