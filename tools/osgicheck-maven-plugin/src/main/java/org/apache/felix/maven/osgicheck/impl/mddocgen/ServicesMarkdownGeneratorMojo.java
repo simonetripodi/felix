@@ -147,7 +147,7 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo {
         try {
             reader = new FileReader(serviceFile);
 
-            XmlHandler xmlHandler = new XmlHandler(null, mavenScrLogger, false, true);
+            XmlHandler xmlHandler = new XmlHandler(new SyntheticBundle(servicesDirectory, serviceFile), mavenScrLogger, false, true);
             KXml2SAXParser parser = new KXml2SAXParser(reader);
             parser.parseXML(xmlHandler);
 

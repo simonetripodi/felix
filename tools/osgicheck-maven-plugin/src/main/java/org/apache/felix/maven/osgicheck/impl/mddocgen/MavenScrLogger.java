@@ -64,19 +64,35 @@ final class MavenScrLogger implements Logger {
             Long componentId, Throwable ex) {
         switch (level) {
             case LogService.LOG_DEBUG:
-                log.debug(message, ex);
+                if (ex != null) {
+                    log.debug(message, ex);
+                } else {
+                    log.debug(message);
+                }
                 break;
 
             case LogService.LOG_ERROR:
-                log.error(message, ex);
+                if (ex != null) {
+                    log.error(message, ex);
+                } else {
+                    log.error(message);
+                }
                 break;
 
             case LogService.LOG_INFO:
-                log.info(message, ex);
+                if (ex != null) {
+                    log.info(message, ex);
+                } else {
+                    log.info(message);
+                }
                 break;
 
             case LogService.LOG_WARNING:
-                log.warn(message, ex);
+                if (ex != null) {
+                    log.warn(message, ex);
+                } else {
+                    log.warn(message);
+                }
                 break;
 
             default:
