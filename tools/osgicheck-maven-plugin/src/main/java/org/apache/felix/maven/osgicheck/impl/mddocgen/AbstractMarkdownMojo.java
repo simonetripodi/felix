@@ -49,7 +49,7 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
     private String projectCopyrights;
 
     @Parameter
-    private String[] exclude;
+    private String[] excludes;
 
     private Map<String, List<ClassName>> index;
 
@@ -73,16 +73,16 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
             getTargetDir().mkdirs();
         }
 
-        String excludes = null;
-        if (exclude != null && exclude.length != 0) {
-            excludes = StringUtils.join(exclude, ",");
+        String excludesString = null;
+        if (excludes != null && excludes.length != 0) {
+            excludesString = StringUtils.join(excludes, ",");
         } else {
-            excludes = null;
+            excludesString = null;
         }
 
         Collection<File> found = null;
         try {
-            found = FileUtils.getFiles(getSourceDir(), getIncludes(), excludes);
+            found = FileUtils.getFiles(getSourceDir(), getIncludes(), excludesString);
         } catch (IOException e) {
             throw new MojoExecutionException("An error occurred while scanning directory '"
                                              + getSourceDir()
