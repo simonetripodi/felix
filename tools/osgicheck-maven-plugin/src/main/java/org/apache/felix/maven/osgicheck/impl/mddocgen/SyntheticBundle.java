@@ -171,7 +171,6 @@ final class SyntheticBundle implements Bundle {
 
     @Override
     public URL getEntry(String path) {
-        // not needed
         File entry = new File(bundleDirectory, path);
         try {
             return entry.toURI().toURL();
