@@ -20,13 +20,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.felix.scr.impl.helper.Logger;
 import org.apache.felix.scr.impl.metadata.ComponentMetadata;
 import org.apache.felix.scr.impl.metadata.Faker;
 import org.apache.felix.scr.impl.metadata.PropertyMetadata;
@@ -37,14 +35,13 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.IOUtil;
-import org.osgi.service.log.LogService;
 
 @Mojo(
     name = "generate-services-doc",
     defaultPhase = LifecyclePhase.PACKAGE,
     threadSafe = false
 )
-public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo implements Logger {
+public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo {
 
     // plugin parameters
 
@@ -56,6 +53,8 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
 
     @Parameter(defaultValue="${project.name} ${project.version} Services", readonly = true)
     private String readmeTitle;
+
+    private final MavenScrLogger mavenScrLogger = new MavenScrLogger(getLog());
 
     @Override
     protected String getReadmeTitle() {
@@ -148,7 +147,7 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
         try {
             reader = new FileReader(serviceFile);
 
-            XmlHandler xmlHandler = new XmlHandler(null, this, false, true);
+            XmlHandler xmlHandler = new XmlHandler(null, mavenScrLogger, false, true);
             KXml2SAXParser parser = new KXml2SAXParser(reader);
             parser.parseXML(xmlHandler);
 
@@ -165,79 +164,6 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
         }
 
         return metadata;
-    }
-
-    // logger methods
-
-    @Override
-    public boolean isLogEnabled(int level) {
-        switch (level) {
-            case LogService.LOG_DEBUG:
-                return getLog().isDebugEnabled();
-
-            case LogService.LOG_ERROR:
-                return getLog().isErrorEnabled();
-
-            case LogService.LOG_INFO:
-                return getLog().isInfoEnabled();
-
-            case LogService.LOG_WARNING:
-                return getLog().isWarnEnabled();
-
-            default:
-                return false;
-        }
-    }
-
-    @Override
-    public void log(int level, String pattern, Object[] arguments, ComponentMetadata metadata, Long componentId, Throwable ex) {
-        String message = MessageFormat.format(pattern, arguments);
-
-        switch (level) {
-            case LogService.LOG_DEBUG:
-                getLog().debug(message, ex);
-                break;
-
-            case LogService.LOG_ERROR:
-                getLog().error(message, ex);
-                break;
-
-            case LogService.LOG_INFO:
-                getLog().info(message, ex);
-                break;
-
-            case LogService.LOG_WARNING:
-                getLog().warn(message, ex);
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    @Override
-    public void log(int level, String message, ComponentMetadata metadata,
-            Long componentId, Throwable ex) {
-        switch (level) {
-            case LogService.LOG_DEBUG:
-                getLog().debug(message, ex);
-                break;
-
-            case LogService.LOG_ERROR:
-                getLog().error(message, ex);
-                break;
-
-            case LogService.LOG_INFO:
-                getLog().info(message, ex);
-                break;
-
-            case LogService.LOG_WARNING:
-                getLog().warn(message, ex);
-                break;
-
-            default:
-                break;
-        }
     }
 
 }
