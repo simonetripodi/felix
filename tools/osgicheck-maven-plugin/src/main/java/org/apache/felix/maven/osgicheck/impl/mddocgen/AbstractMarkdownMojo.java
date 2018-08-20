@@ -158,7 +158,7 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
     }
 
     protected static PrintWriter newPrintWriter(File target) throws IOException {
-        return new PrintWriter(new BufferedWriter(new FileWriter(target, true)));
+        return new PrintWriter(new BufferedWriter(new FileWriter(target)));
     }
 
     protected static final class ClassName {
