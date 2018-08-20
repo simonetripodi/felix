@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -190,21 +191,23 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo im
 
     @Override
     public void log(int level, String pattern, Object[] arguments, ComponentMetadata metadata, Long componentId, Throwable ex) {
+        String message = MessageFormat.format(pattern, arguments);
+
         switch (level) {
             case LogService.LOG_DEBUG:
-                getLog().debug(String.format(pattern, arguments), ex);
+                getLog().debug(message, ex);
                 break;
 
             case LogService.LOG_ERROR:
-                getLog().error(String.format(pattern, arguments), ex);
+                getLog().error(message, ex);
                 break;
 
             case LogService.LOG_INFO:
-                getLog().info(String.format(pattern, arguments), ex);
+                getLog().info(message, ex);
                 break;
 
             case LogService.LOG_WARNING:
-                getLog().warn(String.format(pattern, arguments), ex);
+                getLog().warn(message, ex);
                 break;
 
             default:
