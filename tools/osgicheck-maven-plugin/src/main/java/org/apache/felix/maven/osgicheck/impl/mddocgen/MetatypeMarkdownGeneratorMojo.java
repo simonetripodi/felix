@@ -103,61 +103,59 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
         for (File metatypeFile : metatypes) {
             MetaData metaData = readMetaData(metatypeFile);
 
-            if (metaData == null) {
-                continue;
-            }
+            if (metaData != null) {
+                Properties localizationProperties = readLocalizationProperties(metatypeFile, metaData);
 
-            Properties localizationProperties = readLocalizationProperties(metatypeFile, metaData);
+                // produce the output(s)
 
-            // produce the output(s)
+                @SuppressWarnings("unchecked") // verified in the source code
+                Map<String, OCD> ocds = metaData.getObjectClassDefinitions();
+                for (OCD ocd : ocds.values()) {
+                    String id = ocd.getID();
 
-            @SuppressWarnings("unchecked") // verified in the source code
-            Map<String, OCD> ocds = metaData.getObjectClassDefinitions();
-            for (OCD ocd : ocds.values()) {
-                String id = ocd.getID();
+                    ClassName className = ClassName.get(id);
 
-                ClassName className = ClassName.get(id);
+                    // write in the index
 
-                // write in the index
+                    doIndex(className.getPackageName(), className);
 
-                doIndex(className.getPackageName(), className);
+                    // write in the related metatype file
 
-                // write in the related metatype file
+                    File targetDir = new File(metatypeMarkdownDirectory, className.getPackagePath());
+                    if (!targetDir.exists()) {
+                        targetDir.mkdirs();
+                    }
+                    File targetFile = new File(targetDir, className.getSimpleName() + ".md");
 
-                File targetDir = new File(metatypeMarkdownDirectory, className.getPackagePath());
-                if (!targetDir.exists()) {
-                    targetDir.mkdirs();
-                }
-                File targetFile = new File(targetDir, className.getSimpleName() + ".md");
+                    PrintWriter writer = null;
+                    try {
+                        writer = newPrintWriter(targetFile);
 
-                PrintWriter writer = null;
-                try {
-                    writer = newPrintWriter(targetFile);
+                        // generic properties
 
-                    // generic properties
+                        writer.format("# %s%n%n", getlocalizedLabel(ocd.getName(), localizationProperties));
+                        writer.format("## `%s`%n%n", ocd.getID());
+                        writer.println(getlocalizedLabel(ocd.getDescription(), localizationProperties));
+                        writer.println();
+                        writer.println("| ID  | Name | Required | Type | Default value | Description |");
+                        writer.println("| --- | ---- | -------- | ---- | ------------- | ----------- |");
 
-                    writer.format("# %s%n%n", getlocalizedLabel(ocd.getName(), localizationProperties));
-                    writer.format("## `%s`%n%n", ocd.getID());
-                    writer.println(getlocalizedLabel(ocd.getDescription(), localizationProperties));
-                    writer.println();
-                    writer.println("| ID  | Name | Required | Type | Default value | Description |");
-                    writer.println("| --- | ---- | -------- | ---- | ------------- | ----------- |");
+                        // main attributes
 
-                    // main attributes
+                        @SuppressWarnings("unchecked") // verified in the source code
+                        Map<String, AD> attributes = ocd.getAttributeDefinitions();
+                        printAttributes(attributes, localizationProperties, writer);
 
-                    @SuppressWarnings("unchecked") // verified in the source code
-                    Map<String, AD> attributes = ocd.getAttributeDefinitions();
-                    printAttributes(attributes, localizationProperties, writer);
+                        // optional attributes
 
-                    // optional attributes
-
-                    @SuppressWarnings("unchecked") // verified in the source code
-                    Map<String, AD> optionalAttributes = ocd.getOptionalAttributes();
-                    printAttributes(optionalAttributes, localizationProperties, writer);
-                } catch (IOException e) {
-                    getLog().error("An error occurred while rendering documentation in " + targetFile, e);
-                } finally {
-                    IOUtil.close(writer);
+                        @SuppressWarnings("unchecked") // verified in the source code
+                        Map<String, AD> optionalAttributes = ocd.getOptionalAttributes();
+                        printAttributes(optionalAttributes, localizationProperties, writer);
+                    } catch (IOException e) {
+                        getLog().error("An error occurred while rendering documentation in " + targetFile, e);
+                    } finally {
+                        IOUtil.close(writer);
+                    }
                 }
             }
         }
