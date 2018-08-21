@@ -82,6 +82,10 @@ public final class ServicesMarkdownGeneratorMojo extends AbstractMarkdownMojo {
             List<ComponentMetadata> metadata = readComponentMetadata(serviceFile);
 
             for (ComponentMetadata component : metadata) {
+                if (isExcluded(component.getImplementationClassName())) {
+                    continue;
+                }
+
                 ServiceMetadata serviceMetadata = component.getServiceMetadata();
                 if (serviceMetadata != null) {
                     String[] providedServices = serviceMetadata.getProvides();

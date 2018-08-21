@@ -113,6 +113,10 @@ public final class MetatypeMarkdownGeneratorMojo extends AbstractMarkdownMojo {
                 for (OCD ocd : ocds.values()) {
                     String id = ocd.getID();
 
+                    if (isExcluded(id)) {
+                        continue;
+                    }
+
                     ClassName className = ClassName.get(id);
 
                     // write in the index

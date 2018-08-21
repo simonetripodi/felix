@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.maven.plugin.AbstractMojo;
@@ -35,7 +36,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.StringUtils;
 
 abstract class AbstractMarkdownMojo extends AbstractMojo {
 
@@ -49,7 +49,7 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
     private String projectCopyrights;
 
     @Parameter
-    private String[] excludes;
+    private Set<String> excludes;
 
     private Map<String, List<ClassName>> index;
 
@@ -73,16 +73,9 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
             getTargetDir().mkdirs();
         }
 
-        String excludesString = null;
-        if (excludes != null && excludes.length != 0) {
-            excludesString = StringUtils.join(excludes, ",");
-        } else {
-            excludesString = null;
-        }
-
         Collection<File> found = null;
         try {
-            found = FileUtils.getFiles(getSourceDir(), getIncludes(), excludesString);
+            found = FileUtils.getFiles(getSourceDir(), getIncludes(), null);
         } catch (IOException e) {
             throw new MojoExecutionException("An error occurred while scanning directory '"
                                              + getSourceDir()
@@ -101,6 +94,14 @@ abstract class AbstractMarkdownMojo extends AbstractMojo {
         handle(found);
 
         writeIndex();
+    }
+
+    protected final boolean isExcluded(String name) {
+        if (excludes.contains(name)) {
+            getLog().debug(name + " is in the exclude list, it won't be processed");
+            return true;
+        }
+        return false;
     }
 
     protected final void doIndex(String key, ClassName value) {
